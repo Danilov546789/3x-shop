@@ -9,9 +9,11 @@
 ## Быстрый деплой на свой сервер
 
 ```bash
+apt-get update
+apt-get install -y git
 git clone https://github.com/Danilov546789/3x-shop.git
 cd 3x-shop
-sudo bash install.sh
+bash install.sh
 ```
 
 `install.sh` на чистом Ubuntu/Debian-сервере сам: ставит системные зависимости
