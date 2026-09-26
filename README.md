@@ -10,7 +10,7 @@
 
 ```bash
 apt-get update
-apt-get install -y git
+apt-get install -y git sudo
 git clone https://github.com/Danilov546789/3x-shop.git
 cd 3x-shop
 bash install.sh
