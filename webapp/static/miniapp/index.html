@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPN Shop</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="gate-screen" class="gate-screen hidden">
+    <div class="gate-card">
+      <h3>Подпишись на канал</h3>
+      <p class="hint">Чтобы пользоваться магазином, сначала подпишись на наш канал.</p>
+      <a id="gate-channel-link" class="buy-btn gate-link" target="_blank">📢 Открыть канал</a>
+      <button class="buy-btn" id="gate-recheck-btn">✅ Я подписался, проверить снова</button>
+    </div>
+  </div>
+
+  <div id="app-root">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="plans">Тарифы</button>
+      <button class="tab-btn" data-tab="account">Моя подписка</button>
+      <button class="tab-btn" data-tab="apps">Приложения</button>
+    </div>
+
+    <section id="tab-plans" class="tab-content active">
+      <div id="trial-card"></div>
+      <div id="plans-list" class="plans-list">
+        <div class="loading">Загружаем тарифы…</div>
+      </div>
+    </section>
+
+    <section id="tab-account" class="tab-content">
+      <div id="account-box">
+        <div class="loading">Загружаем данные…</div>
+      </div>
+    </section>
+
+    <section id="tab-apps" class="tab-content">
+      <div id="apps-box">
+        <div class="loading">Загружаем список…</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

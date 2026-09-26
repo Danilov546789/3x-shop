@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPN Shop — Админка</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ЭКРАН ВХОДА -->
+  <div id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card">
+      <h1>VPN Shop</h1>
+      <p class="hint">Вход в панель управления</p>
+      <input type="text" id="login-username" placeholder="Логин" autocomplete="username" required>
+      <input type="password" id="login-password" placeholder="Пароль" autocomplete="current-password" required>
+      <button type="submit">Войти</button>
+      <div id="login-error" class="error-text"></div>
+    </form>
+  </div>
+
+  <!-- ПРИЛОЖЕНИЕ -->
+  <div id="app-shell" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-logo">🛡️ VPN Shop</div>
+      <nav>
+        <button class="nav-btn active" data-view="dashboard">📊 Дашборд</button>
+        <button class="nav-btn" data-view="plans">💳 Тарифы</button>
+        <button class="nav-btn" data-view="panels">🖥️ Серверы</button>
+        <button class="nav-btn" data-view="users">👥 Пользователи</button>
+        <button class="nav-btn" data-view="web-subs">🌐 Веб-магазин</button>
+        <button class="nav-btn" data-view="payments">🧾 Платежи</button>
+      </nav>
+      <button id="logout-btn" class="logout-btn">Выйти</button>
+    </aside>
+
+    <main class="content">
+
+      <section id="view-dashboard" class="view active">
+        <h2>Дашборд</h2>
+        <div class="stat-grid" id="stat-grid"></div>
+      </section>
+
+      <section id="view-plans" class="view">
+        <div class="view-header">
+          <h2>Тарифы</h2>
+          <button class="btn-primary" id="add-plan-btn">+ Новый тариф</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Название</th><th>Дней</th><th>Лимит</th><th>⭐ Stars</th><th>₽ RUB</th><th>Статус</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="plans-tbody"></tbody>
+        </table>
+      </section>
+
+      <section id="view-panels" class="view">
+        <div class="view-header">
+          <h2>Серверы (панели 3x-ui)</h2>
+          <button class="btn-primary" id="add-panel-btn">+ Новая панель</button>
+        </div>
+        <p class="hint">
+          Клиент создаётся сразу на всех активных панелях. Одна из панелей — «главная»:
+          именно её ссылка-подписка выдаётся пользователю, в неё автоматически подмешиваются
+          подписки остальных панелей через внешние ссылки.
+        </p>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Название</th><th>URL панели</th><th>Инбаунды</th><th>Главная</th><th>Статус</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="panels-tbody"></tbody>
+        </table>
+      </section>
+
+      <section id="view-users" class="view">
+        <div class="view-header">
+          <h2>Пользователи</h2>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="users-search" placeholder="Поиск по имени/username…">
+            <button class="btn-primary" id="add-user-btn">+ Добавить вручную</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>ID</th><th>Имя</th><th>Username</th><th>Подписка до</th><th>Статус</th><th></th></tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+        <div class="pagination" id="users-pagination"></div>
+      </section>
+
+      <section id="view-payments" class="view">
+        <h2>Платежи</h2>
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>Покупатель</th><th>Сумма</th><th>Способ</th><th>Статус</th><th>Дата</th></tr>
+          </thead>
+          <tbody id="payments-tbody"></tbody>
+        </table>
+        <div class="pagination" id="payments-pagination"></div>
+      </section>
+
+      <section id="view-web-subs" class="view">
+        <div class="view-header">
+          <h2>Веб-магазин (покупатели без Telegram)</h2>
+          <input type="text" id="web-subs-search" placeholder="Поиск по email…">
+        </div>
+        <p class="hint">
+          Покупки, сделанные на сайте (корень домена) картой через ЮKassa, без привязки к
+          Telegram — идентификатор здесь email, а не Telegram ID.
+        </p>
+        <table class="data-table">
+          <thead>
+            <tr><th>Email</th><th>До</th><th>Лимит</th><th>Статус</th><th></th></tr>
+          </thead>
+          <tbody id="web-subs-tbody"></tbody>
+        </table>
+        <div class="pagination" id="web-subs-pagination"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Модалка тарифа -->
+  <div id="plan-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="plan-modal-title">Тариф</h3>
+      <label>Название<input id="plan-title"></label>
+      <label>Описание<input id="plan-description"></label>
+      <div class="form-row">
+        <label>Дней<input type="number" id="plan-duration"></label>
+        <label>Лимит ГБ (0 = safe безлимит)<input type="number" id="plan-data-limit"></label>
+      </div>
+      <div class="form-row">
+        <label>Цена ⭐ Stars<input type="number" id="plan-price-stars"></label>
+        <label>Цена ₽ RUB<input type="number" step="0.01" id="plan-price-rub"></label>
+      </div>
+      <label class="checkbox-row"><input type="checkbox" id="plan-is-active"> Активен (виден в магазине)</label>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="plan-cancel-btn">Отмена</button>
+        <button class="btn-primary" id="plan-save-btn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка панели -->
+  <div id="panel-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="panel-modal-title">Панель 3x-ui</h3>
+      <label>Название<input id="panel-name" placeholder="RU Baget"></label>
+      <label>Base URL<input id="panel-base-url" placeholder="https://panel.example.com:2053"></label>
+      <label>API Token<input id="panel-api-token" placeholder="Settings → Security → API Token"></label>
+      <label>Sub Base URL<input id="panel-sub-base-url" placeholder="https://panel.example.com:2096/sub"></label>
+      <label>ID инбаундов (через запятую)<input id="panel-inbound-ids" placeholder="1,2,3"></label>
+      <label class="checkbox-row"><input type="checkbox" id="panel-is-primary"> Главная панель</label>
+      <label class="checkbox-row"><input type="checkbox" id="panel-is-active"> Активна</label>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="panel-test-btn">Проверить связь</button>
+        <span id="panel-test-result"></span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="panel-cancel-btn">Отмена</button>
+        <button class="btn-primary" id="panel-save-btn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка пользователя -->
+  <div id="user-modal" class="modal hidden">
+    <div class="modal-card modal-card-wide">
+      <h3 id="user-modal-title">Пользователь</h3>
+      <div id="user-modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="user-close-btn">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка ручного добавления клиента -->
+  <div id="grant-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Добавить клиента вручную</h3>
+      <p class="hint">
+        Укажи Telegram ID пользователя (числовой). Бот сможет прислать ему уведомление, только
+        если пользователь уже хотя бы раз писал боту — по одному username написать первым нельзя
+        (ограничение Bot API).
+      </p>
+      <label>Telegram ID<input type="number" id="grant-user-id" placeholder="123456789"></label>
+      <label>Username (необязательно)<input id="grant-username" placeholder="без @"></label>
+      <label>Имя (необязательно)<input id="grant-first-name"></label>
+      <label>Тариф
+        <select id="grant-plan-id"></select>
+      </label>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="grant-cancel-btn">Отмена</button>
+        <button class="btn-primary" id="grant-save-btn">Выдать подписку</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

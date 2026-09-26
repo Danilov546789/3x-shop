@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPN Shop</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="logo" id="site-title">🛡️ VPN Shop</div>
+      <a id="bot-link" class="bot-link hidden" target="_blank">Открыть в Telegram →</a>
+    </div>
+    <h1>Быстрый и надёжный VPN</h1>
+    <p class="hero-sub">Без установки Telegram — оплати картой и получи ссылку-подписку сразу на почту и на этой странице.</p>
+  </header>
+
+  <main class="container">
+    <section class="email-section">
+      <label for="email-input">Email — на него ничего не пришлём кроме ссылки после оплаты, используется только для получения доступа</label>
+      <input type="email" id="email-input" placeholder="you@example.com">
+    </section>
+
+    <section id="plans-list" class="plans-grid">
+      <div class="loading">Загружаем тарифы…</div>
+    </section>
+
+    <section class="how-it-works">
+      <h2>Как это работает</h2>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div>Выбери тариф и укажи email</div></div>
+        <div class="step"><div class="step-num">2</div><div>Оплати картой на защищённой странице ЮKassa</div></div>
+        <div class="step"><div class="step-num">3</div><div>Получи ссылку-подписку и вставь её в приложение</div></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Уже купили и хотите продлить или изменить тариф? Просто оформите новый заказ с тем же email — подписка автоматически продлится.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
