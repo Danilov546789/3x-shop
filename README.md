@@ -374,85 +374,90 @@ sudo bash install.sh
 nginx/Caddy + certbot, либо используйте Docker (`docker-compose.yml`).
 
 Команды для администрирования из консоли
-Обновление кода
-После `git push` в свой репозиторий — на сервере одна команда вместо
-`git pull` + переустановки зависимостей + `chown` + рестарта вручную:
-```bash
-sudo bash /opt/<папка-проекта>/update.sh
-```
-(`update.sh` лежит в корне репозитория — делает `git pull`, ставит
-обновлённые зависимости, возвращает файлам владельца `vpnshop` и
-перезапускает оба сервиса.)
-Сервисы (бот и веб)
-```bash
-systemctl status vpnshop-bot vpnshop-web      # статус обоих
-systemctl restart vpnshop-bot vpnshop-web     # перезапуск обоих
-systemctl stop vpnshop-web                    # остановить (например, для техработ)
-journalctl -u vpnshop-bot -f                  # логи бота в реальном времени (Ctrl+C — выйти)
-journalctl -u vpnshop-web -f                  # логи веб-сервиса в реальном времени
-journalctl -u vpnshop-web -n 100 --no-pager   # последние 100 строк без live-режима
-```
-База данных (SQLite)
-БД лежит в `<папка-проекта>/vpnshop.db`. Удобные запросы
-(`-header -column` — красивый вывод таблицей):
-```bash
-cd /opt/<папка-проекта>
 
-# Активные Telegram-подписки
-sqlite3 -header -column vpnshop.db "SELECT id, user_id, expires_at, is_active FROM subscriptions WHERE is_active=1 ORDER BY expires_at;"
+ Обновление кода
+  После `git push` в свой репозиторий — на сервере одна команда вместо
+  `git pull` + переустановки зависимостей + `chown` + рестарта вручную:
+  ```bash
+  sudo bash /opt/<папка-проекта>/update.sh
+  ```
+  (`update.sh` лежит в корне репозитория — делает `git pull`, ставит
+  обновлённые зависимости, возвращает файлам владельца `vpnshop` и
+  перезапускает оба сервиса.)
+  
+ Сервисы (бот и веб)
+  ```bash
+  systemctl status vpnshop-bot vpnshop-web      # статус обоих
+  systemctl restart vpnshop-bot vpnshop-web     # перезапуск обоих
+  systemctl stop vpnshop-web                    # остановить (например, для техработ)
+  journalctl -u vpnshop-bot -f                  # логи бота в реальном времени (Ctrl+C — выйти)
+  journalctl -u vpnshop-web -f                  # логи веб-сервиса в реальном времени
+  journalctl -u vpnshop-web -n 100 --no-pager   # последние 100 строк без live-режима
+  ```
 
-# Активные подписки с сайта (веб-магазин)
-sqlite3 -header -column vpnshop.db "SELECT id, email, expires_at, is_active FROM web_subscriptions WHERE is_active=1 ORDER BY expires_at;"
+ База данных (SQLite)
+  БД лежит в `<папка-проекта>/vpnshop.db`. Удобные запросы
+  (`-header -column` — красивый вывод таблицей):
+  ```bash
+  cd /opt/<папка-проекта>
 
-# Последние 20 платежей
-sqlite3 -header -column vpnshop.db "SELECT id, user_id, email, amount, currency, provider, status, created_at FROM payments ORDER BY id DESC LIMIT 20;"
+  # Активные Telegram-подписки
+  sqlite3 -header -column vpnshop.db "SELECT id, user_id, expires_at, is_active FROM subscriptions WHERE is_active=1 ORDER BY expires_at;"
 
-# Список тарифов
-sqlite3 -header -column vpnshop.db "SELECT id, title, duration_days, price_stars, price_rub, is_active FROM plans;"
+  # Активные подписки с сайта (веб-магазин)
+  sqlite3 -header -column vpnshop.db "SELECT id, email, expires_at, is_active FROM web_subscriptions WHERE is_active=1 ORDER BY expires_at;"
 
-# Список подключённых панелей 3x-ui
-sqlite3 -header -column vpnshop.db "SELECT id, name, base_url, is_primary, is_active FROM panels;"
+  # Последние 20 платежей
+  sqlite3 -header -column vpnshop.db "SELECT id, user_id, email, amount, currency, provider, status, created_at FROM payments ORDER BY id DESC LIMIT 20;"
 
-# Сколько всего пользователей бота
-sqlite3 vpnshop.db "SELECT COUNT(*) FROM users;"
-```
-Через саму админку (`/admin`) то же самое обычно удобнее — эти запросы
-больше для быстрого «подглядеть» без браузера.
-Бэкап базы
-Копировать файл `.db` "на живую" рискованно (может зацепить середину
-записи) — лучше через встроенный `.backup`:
-```bash
-mkdir -p /opt/backups
-sqlite3 /opt/<папка-проекта>/vpnshop.db ".backup '/opt/backups/vpnshop-$(date +%F).db'"
-```
-Автоматически раз в сутки — добавить в cron:
-```bash
-crontab -e
-# и добавить строку:
-0 3 * * * sqlite3 /opt/<папка-проекта>/vpnshop.db ".backup '/opt/backups/vpnshop-$(date +\%F).db'"
-```
-nginx и сертификат
-```bash
-nginx -t                          # проверить конфиг перед reload
-systemctl reload nginx            # применить изменения без разрыва соединений
-certbot certificates              # какие сертификаты есть и когда истекают
-certbot renew --dry-run           # проверка, что автопродление сработает (без реального продления)
-```
-Автопродление уже настроено самим certbot (systemd timer) — руками
-обычно ничего делать не нужно.
-Полезное при отладке
-```bash
-curl -sI https://ваш-домен/                  # быстро проверить, что сайт живой
-curl -s http://127.0.0.1:8000/admin/api/me   # проверка, что API отвечает в обход nginx
-ss -tlnp | grep :8000                        # что слушает порт 8000 (должен быть uvicorn)
-df -h                                        # место на диске (SQLite + логи иногда разрастаются)
+  # Список тарифов
+  sqlite3 -header -column vpnshop.db "SELECT id, title, duration_days, price_stars, price_rub, is_active FROM plans;"
+
+  # Список подключённых панелей 3x-ui
+  sqlite3 -header -column vpnshop.db "SELECT id, name, base_url, is_primary, is_active FROM panels;"
+
+  # Сколько всего пользователей бота
+  sqlite3 vpnshop.db "SELECT COUNT(*) FROM users;"
+  ```
+  Через саму админку (`/admin`) то же самое обычно удобнее — эти запросы
+  больше для быстрого «подглядеть» без браузера.
+  
+ Бэкап базы
+  Копировать файл `.db` "на живую" рискованно (может зацепить середину
+  записи) — лучше через встроенный `.backup`:
+  ```bash
+  mkdir -p /opt/backups
+  sqlite3 /opt/<папка-проекта>/vpnshop.db ".backup '/opt/backups/vpnshop-$(date +%F).db'"
+  ```
+  Автоматически раз в сутки — добавить в cron:
+  ```bash
+  crontab -e
+  # и добавить строку:
+  0 3 * * * sqlite3 /opt/<папка-проекта>/vpnshop.db ".backup '/opt/backups/vpnshop-$(date +\%F).db'"
+  ```
+  nginx и сертификат
+  ```bash
+  nginx -t                          # проверить конфиг перед reload
+  systemctl reload nginx            # применить изменения без разрыва соединений
+  certbot certificates              # какие сертификаты есть и когда истекают
+  certbot renew --dry-run           # проверка, что автопродление сработает (без реального продления)
+  ```
+
+ Автопродление уже настроено самим certbot (systemd timer) — руками
+ обычно ничего делать не нужно.
+  Полезное при отладке
+  ```bash
+  curl -sI https://ваш-домен/                  # быстро проверить, что сайт живой
+  curl -s http://127.0.0.1:8000/admin/api/me   # проверка, что API отвечает в обход nginx
+  ss -tlnp | grep :8000                        # что слушает порт 8000 (должен быть uvicorn)
+  df -h                                        # место на диске (SQLite + логи иногда разрастаются)
 
 
-## Оплата картой через ЮKassa
+  ## Оплата картой через ЮKassa
 
-Поддержаны два способа оплаты одновременно: Telegram Stars (всегда доступен)
-и банковская карта через ЮKassa (появляется в Mini App автоматически, как
-только заполнены переменные окружения).
+  Поддержаны два способа оплаты одновременно: Telegram Stars (всегда доступен)
+  и банковская карта через ЮKassa (появляется в Mini App автоматически, как
+  только заполнены переменные окружения).
 
 1. Зарегистрируйте магазин на [yookassa.ru](https://yookassa.ru), в личном
    кабинете возьмите `shopId` и `secretKey` (Настройки → API) и впишите их в
