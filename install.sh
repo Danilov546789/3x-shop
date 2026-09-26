@@ -44,6 +44,18 @@ if [ ! -f "$PROJECT_DIR/requirements.txt" ] || [ ! -d "$PROJECT_DIR/webapp" ]; t
   die "Запускать install.sh нужно из корня проекта (не найден requirements.txt/webapp/)"
 fi
 
+# Сервисы работают от отдельного системного пользователя (vpnshop), а не от root.
+# Если проект лежит внутри /root (или другой папки с правами 700, доступной только root),
+# этот пользователь физически не сможет в неё зайти, сколько ни меняй владельца файлов
+# внутри — блокирует именно родительский каталог. Ловим это сразу, а не посреди установки.
+case "$PROJECT_DIR" in
+  /root|/root/*)
+    die "Проект лежит в $PROJECT_DIR — папка /root закрыта для всех, кроме root, поэтому
+сервисный пользователь не сможет с ним работать. Перенесите проект, например:
+  mkdir -p /opt && mv \"$PROJECT_DIR\" /opt/$(basename "$PROJECT_DIR") && cd /opt/$(basename "$PROJECT_DIR") && sudo bash install.sh"
+    ;;
+esac
+
 echo -e "${C_BOLD}"
 echo "======================================================================"
 echo " Telegram VPN Shop — автоустановка"
@@ -106,19 +118,24 @@ PY
 # ---------------------------------------------------------------------------
 # 1. Системные зависимости
 # ---------------------------------------------------------------------------
-info "Обновляю списки пакетов и ставлю системные зависимости (python3, nginx, certbot, git, sqlite3)…"
+info "Обновляю списки пакетов и ставлю системные зависимости (python3, nginx, certbot, git, sudo, sqlite3)…"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq \
   python3 python3-venv python3-pip \
   nginx certbot python3-certbot-nginx \
-  git curl sqlite3 openssl ca-certificates >/dev/null
+  git curl sqlite3 openssl ca-certificates sudo >/dev/null
 
 PYTHON_BIN="$(command -v python3)"
 if ! python_version_ok "$PYTHON_BIN"; then
   die "Нужен Python 3.10+, а в системе $($PYTHON_BIN --version). Обновите ОС (Ubuntu 22.04/24.04, Debian 12) и запустите заново."
 fi
 ok "Python: $($PYTHON_BIN --version)"
+
+if ! command -v sudo >/dev/null 2>&1; then
+  warn "Пакет sudo не установился и не найден. Раз мы уже root — подменяю sudo на прямой запуск команд."
+  sudo() { "$@"; }
+fi
 
 # ---------------------------------------------------------------------------
 # 2. Интерактивные вопросы
@@ -254,6 +271,12 @@ else
   ok "Пользователь '$SERVICE_USER' уже существует"
 fi
 chown -R "$SERVICE_USER:$SERVICE_USER" "$PROJECT_DIR"
+
+if ! sudo -u "$SERVICE_USER" test -r "$PROJECT_DIR/requirements.txt"; then
+  die "Пользователь $SERVICE_USER не может прочитать файлы в $PROJECT_DIR — обычно это
+значит, что один из родительских каталогов (например, /root) закрыт для всех, кроме root.
+Перенесите проект в каталог с обычными правами, например /opt, и запустите install.sh снова."
+fi
 
 # ---------------------------------------------------------------------------
 # 4. Python venv + зависимости
